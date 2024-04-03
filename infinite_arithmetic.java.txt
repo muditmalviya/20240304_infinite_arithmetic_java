@@ -1,0 +1,182 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class InfiniteArithmetic {
+
+    private List<Integer> digits = new ArrayList<>();
+    private List<Integer> baseDigits = Collections.singletonList(1);
+
+    public InfiniteArithmetic(Object input) {
+        Object inputStore = input;
+
+        if (input instanceof Integer) {
+            int value = (Integer) input;
+
+            if (value < 0) {
+                throw new IllegalArgumentException("Input cannot be negative");
+            }
+
+            while (value != 0) {
+                digits.add(0, value % 10);
+                value = value / 10;
+            }
+        } else if (input instanceof String) {
+            String strValue = (String) input;
+
+            if (strValue.isEmpty()) {
+                throw new IllegalArgumentException("Empty string is not accepted.");
+            }
+
+            if (!strValue.matches("\\d+")) {
+                throw new IllegalArgumentException("String can have decimal numbers only.");
+            }
+
+            for (int i = 0; i < strValue.length(); i++) {
+                char digitChar = strValue.charAt(i);
+                int digit = Character.getNumericValue(digitChar);
+                digits.add(digit);
+            }
+        } else if (input instanceof List<?>) {
+            List<?> inputList = (List<?>) input;
+            digits = (List<Integer>) inputList;
+        } else if (input instanceof Object) {
+            digits = List.of(4, 5, 6);
+        } else {
+            throw new IllegalArgumentException("Unsupported data type: " + input.getClass());
+        }
+    }
+
+    public List<Integer> getDigits() {
+        return new ArrayList<>(digits);
+    }
+
+    public String getValueAsString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Integer digit : digits) {
+            stringBuilder.append(digit);
+        }
+        return stringBuilder.toString();
+    }
+
+    public List<Integer> add() {
+        List<Integer> result = new ArrayList<>();
+        int carry = 0;
+
+        List<Integer> base = baseDigits;
+        List<Integer> secondary = digits;
+
+        int primaryLength = base.size();
+        int secondaryLength = secondary.size();
+        int maxLengthDifference = Math.abs(primaryLength - secondaryLength);
+        int index = 0;
+
+        if (primaryLength > secondaryLength) {
+            while (index < maxLengthDifference) {
+                secondary.add(0, 0); 
+                index++;
+            }
+        } else {
+            while (index < maxLengthDifference) {
+                base.add(0, 0); 
+                index++;
+            }
+        }
+
+        Collections.reverse(base);
+        Collections.reverse(secondary);
+
+        int maxDigitLength = Math.max(primaryLength, secondaryLength);
+
+        for (index = 0; index < maxDigitLength; index++) {
+            int temp = base.get(index) + secondary.get(index) + carry;
+            if (temp >= 10) {
+                result.add(temp % 10);
+                carry = temp / 10;
+            } else {
+                result.add(temp % 10);
+                carry = 0;
+            }
+        }
+
+        if (carry > 0) {
+            result.add(carry); 
+        }
+
+        Collections.reverse(result); 
+        return result;
+    }
+
+    public List<Integer> subtract(Object inputStore) {
+        List<Integer> base = digits;
+        List<Integer> secondary = ((InfiniteArithmetic) inputStore).getDigits();
+
+        List<Integer> result = new ArrayList<>();
+
+        int primaryLength = base.size();
+        int secondaryLength = secondary.size();
+        int maxLengthDifference = Math.abs(primaryLength - secondaryLength);
+        int index = 0, flag = 0;
+
+        if (primaryLength < secondaryLength) {
+            while (index < maxLengthDifference) {
+                base.add(0, 0); 
+                index++;
+            }
+        } else {
+            while (index < maxLengthDifference) {
+                secondary.add(0, 0); 
+                index++;
+            }
+        }
+
+        int primaryValue = Integer.parseInt(getValueAsString()); 
+        int secondaryValue = Integer.parseInt(((InfiniteArithmetic) inputStore).getValueAsString()); 
+
+        Collections.reverse(base);
+        Collections.reverse(secondary);
+
+        if (primaryValue < secondaryValue) {
+            List<Integer> tempArray = base;
+            base = secondary;
+            secondary = tempArray;
+            flag = 1;
+        }
+
+        int maxLength = Math.max(primaryLength, secondaryLength);
+
+        for (index = 0; index < maxLength; index++) {
+            int tempIndex = index;
+            if (base.get(index) < secondary.get(index)) {
+                base.set(index, base.get(index) + 10);
+                result.add(base.get(index) - secondary.get(index));
+                if (index + 1 == maxLength) {
+                    break;
+                } else {
+                    if (base.get(index + 1) == 0) {
+                        int temp2 = index + 1;
+                        while (base.get(temp2) == 0) {
+                            base.set(temp2, 9);
+                            temp2++;
+                        }
+                        base.set(temp2, base.get(temp2) - 1);
+                    } else {
+                        base.set(index + 1, base.get(index + 1) - 1);
+                    }
+                }
+            } else {
+                result.add(base.get(index) - secondary.get(index));
+            }
+            index = tempIndex;
+        }
+
+        if (flag == 0) {
+            Collections.reverse(result);
+            return result;
+        } else {
+            result.add(-1); 
+            Collections.reverse(result);
+            return result;
+        }
+    }
+}
